@@ -1,36 +1,39 @@
 pipeline {
-	agent any
-	
-	tools{nodejs "nodejs"}
-	
-	stages 
-	{				
-		stage('Test')
-		{
-			steps
-			{
-				sh 'npm install'
-				sh 'npm run test'
-				echo 'Test'
-			}
-		}
-	}		
-	post
-	{
-		success
-		{
-			emailext attachLog: true,
-                		body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}",
-              			recipientProviders: [developers(), requestor()],
-              			to: 'zychowicz.nikola@gmail.com',
-              			subject: "Success"
-		}			
-		failure
-		{
-			emailext attachLog: true,
-                		body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}",
-                		recipientProviders: [developers(), requestor()],
-                		to: 'zychowicz.nikola@gmail.com',
-                		subject: "Failed"
-		}
-	}	
+    agent any
+  
+    stages {
+        stage('Build') { 
+            steps {
+                echo 'Building'
+                nodejs('npm') {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('Test') { 
+            steps {
+                echo 'Testing'
+                nodejs('npm') {
+                    sh 'npm run test'
+                }
+            }
+        }
+    }
+
+    post {
+         success {
+            emailext attachLog: true,
+                body: "Test status: ${currentBuild.currentResult}",
+                recipientProviders: [developers(), requestor()],
+                to: 'zychowicz.nikola@gmail.com',
+                subject: "Test passed"
+        }
+        failure {
+            emailext attachLog: true,
+                body: "${currentBuild.currentResult}",
+                recipientProviders: [developers(), requestor()],
+                to: 'zychowicz.nikola@gmail.com',
+                subject: "Test failed"
+        }
+    }
+}
