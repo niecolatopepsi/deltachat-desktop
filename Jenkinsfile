@@ -1,39 +1,44 @@
 pipeline {
-    agent any
-  
+    agent {
+        docker { image 'node:latest' } 
+    }
+    
+	
     stages {
-        stage('Build') { 
+        stage('Build') {
             steps {
-                echo 'Building'
-                nodejs('npm') {
-                    sh 'npm install'
-                }
+                echo 'Building..'
+		sh 'npm install'
+		sh 'npm run build'
             }
         }
-        stage('Test') { 
+        stage('Test') {
             steps {
-                echo 'Testing'
-                nodejs('npm') {
-                    sh 'npm run test'
-                }
+                echo 'Testing..'
+		sh 'npm test'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
             }
         }
     }
 
     post {
-         success {
-            emailext attachLog: true,
-                body: "Test status: ${currentBuild.currentResult}",
-                recipientProviders: [developers(), requestor()],
-                to: 'zychowicz.nikola@gmail.com',
-                subject: "Test passed"
-        }
         failure {
             emailext attachLog: true,
-                body: "${currentBuild.currentResult}",
+                body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}",
                 recipientProviders: [developers(), requestor()],
                 to: 'zychowicz.nikola@gmail.com',
-                subject: "Test failed"
+                subject: "Build failed in Jenkins ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+        }
+        success {
+            emailext attachLog: true,
+                body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}",
+                recipientProviders: [developers(), requestor()],
+                to: 'zychowicz.nikola@gmail.com',
+                subject: "Successful build in Jenkins ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
         }
     }
 }
