@@ -7,12 +7,16 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo 'Building..'
+                echo 'Building...'
+		checkout scm
 		sh 'npm install'
 		sh 'npm run build'
             }
         }
         stage('Test') {
+	   when {
+              	expression {currentBuild.result == null || currentBuild.result == 'SUCCESS'}
+            }
             steps {
                 echo 'Testing..'
 		sh 'npm test'
@@ -20,7 +24,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying....'
+                echo 'Deploying...'
             }
         }
     }
